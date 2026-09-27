@@ -21,6 +21,7 @@ public class ComponentBusTest {
 
     private static final class FakeContext implements ComputerContext {
         final List<String> signals = new ArrayList<>();
+        ComponentBus bus;
 
         @Override
         public boolean pushSignal(String name, Object... args) {
@@ -30,7 +31,7 @@ public class ComponentBusTest {
 
         @Override
         public Component component(String address) {
-            return null;
+            return bus == null ? null : bus.get(address);
         }
 
         @Override
@@ -113,5 +114,45 @@ public class ComponentBusTest {
         assertEquals("echo", bus.entries().get(0).getValue());
         assertNotNull(bus.firstOfType("echo"));
         assertEquals(null, bus.firstOfType("gpu"));
+    }
+
+    /**
+     * Regression for the v0.1.0 launch crash: the Android shell attaches the
+     * whole production component set up front, and the reflective scan must
+     * succeed (and produce invocable callbacks) for every one of them.
+     */
+    public void testProductionComponentsScan() {
+        FakeContext ctx = new FakeContext();
+        ComponentBus bus = new ComponentBus(ctx);
+        ctx.bus = bus;
+        Component[] rig = {
+                new org.opencomputers.component.ScreenComponent(3),
+                new org.opencomputers.component.GpuComponent(3),
+                new org.opencomputers.component.KeyboardComponent(),
+                new org.opencomputers.component.FilesystemComponent("rootfs", 1 << 20, false),
+                new org.opencomputers.component.RedstoneComponent(true),
+                new org.opencomputers.component.SpeakerComponent(),
+                new org.opencomputers.component.DataComponent(3),
+                new org.opencomputers.component.EepromComponent()
+        };
+        for (Component c : rig) {
+            bus.add(c); // throws if the reflective scan fails for this component
+            assertTrue(bus.methods(c.address()) != null,
+                    "scan failed for " + c.type());
+        }
+        // Everything except the keyboard (a pure signal source) exposes callbacks.
+        for (Component c : rig) {
+            if ("keyboard".equals(c.type())) {
+                continue;
+            }
+            assertTrue(!bus.methods(c.address()).isEmpty(),
+                    "no callbacks scanned for " + c.type());
+        }
+        // Spot-check that scanned callbacks are actually invocable.
+        assertNotNull(bus.invoke(rig[0].address(), "isOn", new Object[0]));
+        bus.invoke(rig[1].address(), "bind", new Object[]{rig[0].address()});
+        assertNotNull(bus.invoke(rig[1].address(), "maxResolution", new Object[0]));
+        assertNotNull(bus.invoke(rig[3].address(), "spaceTotal", new Object[0]));
+        assertNotNull(bus.invoke(rig[7].address(), "getLabel", new Object[0]));
     }
 }

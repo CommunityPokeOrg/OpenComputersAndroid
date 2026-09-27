@@ -60,7 +60,7 @@ public final class ComponentBus {
     public List<Map.Entry<String, String>> entries() {
         List<Map.Entry<String, String>> out = new ArrayList<>(components.size());
         for (Component c : components.values()) {
-            out.add(Map.entry(c.address(), c.type()));
+            out.add(new java.util.AbstractMap.SimpleEntry<>(c.address(), c.type()));
         }
         return Collections.unmodifiableList(out);
     }
@@ -130,7 +130,13 @@ public final class ComponentBus {
                         "@Callback method " + m.getName() + " on " + component.type()
                                 + " must take exactly one Object[] parameter");
             }
-            m.trySetAccessible();
+            // Method.trySetAccessible() doesn't exist on Android's ART runtime;
+            // setAccessible is equivalent for the public callbacks we expose.
+            try {
+                m.setAccessible(true);
+            } catch (SecurityException ignored) {
+                // Public methods on public classes are invocable regardless.
+            }
             table.put(m.getName(), m);
         }
         return table;

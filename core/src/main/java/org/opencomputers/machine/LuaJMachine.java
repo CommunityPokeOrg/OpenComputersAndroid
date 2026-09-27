@@ -64,7 +64,7 @@ public class LuaJMachine implements Machine {
         installApis(globals);
 
         String bootCode = bootCode();
-        if (bootCode == null || bootCode.isBlank()) {
+        if (bootCode == null || bootCode.trim().isEmpty()) {
             lastError = "no bootable medium found (eeprom is empty)";
             return;
         }
