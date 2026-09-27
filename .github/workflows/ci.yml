@@ -14,7 +14,15 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
+      # ubuntu-latest runners ship the Android SDK preinstalled ($ANDROID_HOME
+      # with platform-34 / build-tools 34.x and accepted licenses), so no
+      # setup-android step is needed — the action's `sdkmanager tools` call
+      # fails on current cmdline-tools.
+      - name: Verify Android SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls "$ANDROID_HOME/platforms" | tail -3
+          ls "$ANDROID_HOME/build-tools" | tail -3
       - name: Emulator core tests
         run: ./gradlew :core:coreTests
       - name: Assemble debug APK
