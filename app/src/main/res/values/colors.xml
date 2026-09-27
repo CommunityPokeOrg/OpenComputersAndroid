@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="chrome_bg">#FF1B1B1B</color>
+    <color name="chrome_fg">#FFCCCCCC</color>
+    <color name="screen_bg">#FF000000</color>
+</resources>

@@ -1,0 +1,37 @@
+plugins {
+    id 'java-library'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+dependencies {
+    // LuaJ: pure-Java Lua 5.2 VM, used for the OpenComputers Lua architecture.
+    // Vendored at core/libs/ so the build works without Maven Central access;
+    // to use the published artifact instead, switch this to
+    // `implementation 'org.luaj:luaj-jse:3.0.1'` (luaj-jse has no transitive deps).
+    implementation files('libs/luaj-jse-3.0.1.jar')
+}
+
+// The emulator core deliberately uses a zero-dependency reflective test runner
+// (see src/test/java/org/opencomputers/test/Harness.java) so the suite runs with
+// nothing but a JDK — no JUnit/TestNG download required. `./gradlew :core:check`
+// runs it; scripts/test-core.sh runs it with plain javac+java as a fallback.
+tasks.register('compileCoreTests', JavaCompile) {
+    source = fileTree('src/test/java') { include '**/*.java' }
+    classpath = sourceSets.main.output + configurations.runtimeClasspath
+    destinationDirectory = layout.buildDirectory.dir('classes/coreTests')
+    options.release = 17
+}
+
+tasks.register('coreTests', JavaExec) {
+    dependsOn tasks.named('compileCoreTests')
+    classpath = files(layout.buildDirectory.dir('classes/coreTests')) + sourceSets.main.output + configurations.runtimeClasspath
+    mainClass = 'org.opencomputers.test.Harness'
+}
+
+// The stock `test` task has no framework on the classpath; fold our runner into check.
+tasks.named('test') { enabled = false }
+tasks.named('check') { dependsOn tasks.named('coreTests') }

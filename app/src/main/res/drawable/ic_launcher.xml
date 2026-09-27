@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Simple terminal-glyph launcher icon: an OC-style prompt on dark glass. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <path
+        android:fillColor="#1B1B1B"
+        android:pathData="M4,4h40v40h-40z" />
+    <path
+        android:fillColor="#33CC33"
+        android:pathData="M10,14 l10,8 l-10,8 v-5 l5,-3 l-5,-3 z" />
+    <path
+        android:fillColor="#33CC33"
+        android:pathData="M22,30h12v4h-12z" />
+</vector>
